@@ -12,7 +12,7 @@
         = render partial: 'ontologies/concepts_browsers/scheme_picker'
         = render partial: 'ontologies/concepts_browsers/collections_picker',
                        locals: {multiple: true, id: 'collection-color-filter',
-                       data: {action: 'changed->skos-collection-colors#updateCollectionTags' ,
+                       data: {action: 'changed->skos-collection-colors#updateCollectionTags changed->history#updateURL changed->turbo-frame#updateFrame',
                         'skos-collection-colors-enable-colors-value': 'true'}}
   -# Class tree
   %div#sd_content.px-1{style: 'overflow-y: scroll; height: 60vh;'}

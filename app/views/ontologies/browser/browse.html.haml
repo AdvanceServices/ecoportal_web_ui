@@ -68,7 +68,7 @@
               .browse-search-filters
                 %select#format.browse-format-filter{:name => "format"}
                   = options_for_select(@formats, @selected_format)
-                %select#Sort_by.browse-sort-by-filter{name: "Sort_by", 'data-browse-filters-target': "sort"}
+                %select#Sort_by.browse-sort-by-filter{name: "sort_by", 'data-browse-filters-target': "sort"}
                   = options_for_select(@sorts_options, @sort_by)
           .browse-ontologies
             = render TurboFrameComponent.new(id: "ontologies_list_view-page-1" , src: "/ontologies_filter?page=1&#{request.original_url.split('?').last}", data:{"turbo-frame-target":"frame", "turbo-frame-url-value": "/ontologies_filter"}) do |list|

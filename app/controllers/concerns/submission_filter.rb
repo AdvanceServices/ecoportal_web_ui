@@ -149,7 +149,7 @@ module SubmissionFilter
     elsif sort_by.eql?('released')
       submissions = submissions.sort_by { |x| x[:released] || '' }.reverse
     elsif sort_by.eql?('ontology_name')
-      submissions = submissions.sort_by { |x| -x[:name] }
+      submissions = submissions.sort_by { |x| (x[:name] || '').downcase }
     end
     submissions
   end
