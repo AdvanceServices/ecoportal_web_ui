@@ -4,16 +4,16 @@ FROM ruby:${RUBY_VERSION}-alpine
 
 # Install libvips for Active Storage preview support
 RUN apk add --no-cache build-base \
-                       libxml2-dev \
-                       libxslt-dev \
-                       mariadb-dev \
-                       git \
-                       tzdata \
-                       nodejs yarn \
-                       less \
-                       bash \
-                       docker \
-                       docker-compose \
+    libxml2-dev \
+    libxslt-dev \
+    mariadb-dev \
+    git \
+    tzdata \
+    nodejs yarn \
+    less \
+    bash \
+    docker \
+    docker-compose \
     && mkdir /node_modules
 
 # Rails app lives here

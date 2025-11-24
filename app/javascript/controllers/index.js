@@ -76,6 +76,9 @@ application.register("tooltip", TooltipController)
 import TopnavResponsivenessController from "./topnav_responsiveness_controller"
 application.register("topnav-responsiveness", TopnavResponsivenessController)
 
+import GridMenuController from "./grid_menu_controller"
+application.register("grid-menu", GridMenuController)
+
 import TurboFrameController from "./turbo_frame_controller"
 application.register("turbo-frame", TurboFrameController)
 
