@@ -345,6 +345,116 @@ module OntologiesHelper
     end
   end
 
+  def ontology_subject_domains(submission)
+    return [] if submission.nil?
+
+    subject_values = extract_subject_domain_values(submission.respond_to?(:to_hash) ? submission.to_hash : submission)
+    subject_values.map { |value| normalize_ontology_domain(value) }.compact
+  end
+
+  def ontology_domain_label(domain_id)
+    return link_last_part(domain_id).titleize unless link?(domain_id)
+
+    portal_label = portal_domain_label(domain_id)
+    return portal_label if portal_label.present?
+
+    external_domain_label(domain_id) || link_last_part(domain_id).titleize
+  end
+
+  def external_domain_label(domain_id)
+    Rails.cache.fetch("external_domain_label:#{domain_id}", expires_in: 12.hours) do
+      fetch_external_domain_label(domain_id)
+    end
+  rescue StandardError
+    nil
+  end
+
+  private
+
+  def normalize_ontology_domain(domain)
+    if domain.is_a?(Hash)
+      domain = domain.transform_keys(&:to_s)
+      id = domain['@id'] || domain['id'] || domain['uri'] || domain['value'] || domain['subject'] || domain['subjectId']
+      return nil if id.blank?
+
+      {
+        id: id,
+        label: domain['prefLabel'] || domain['label'] || domain['name'],
+        tooltip: domain['description'] || domain['comment'] || id
+      }
+    else
+      domain = domain.to_s.strip
+      return nil if domain.blank?
+
+      { id: domain, label: nil, tooltip: nil }
+    end
+  end
+
+  def portal_domain_label(domain_id)
+    acronym = link_last_part(domain_id).to_s.upcase.strip
+    return if acronym.blank?
+
+    if domain_id.include?('/categories/')
+      category = LinkedData::Client::Models::Category.find(acronym) rescue nil
+      return category.name if category&.name.present?
+    elsif domain_id.include?('/groups/')
+      group = LinkedData::Client::Models::Group.find(acronym) rescue nil
+      return group.name if group&.name.present?
+    end
+
+    nil
+  end
+
+  def fetch_external_domain_label(domain_id)
+    response = Faraday.get(domain_id) do |request|
+      request.options.timeout = 3
+      request.options.open_timeout = 2
+      request.headers['Accept'] = 'text/html,application/xhtml+xml,application/rdf+xml,text/turtle;q=0.9,*/*;q=0.8'
+    end
+
+    return nil unless response.status.to_i.between?(200, 299)
+
+    body = response.body.to_s
+    label = html_meta_content(body, 'property', 'skos:prefLabel') ||
+            html_meta_content(body, 'property', 'rdfs:label') ||
+            html_meta_content(body, 'name', 'dc.title') ||
+            html_meta_content(body, 'property', 'og:title') ||
+            html_title(body)
+
+    sanitize_domain_label(label)
+  end
+
+  def html_meta_content(body, attribute, value)
+    body.match(/<meta[^>]*#{attribute}=["']#{Regexp.escape(value)}["'][^>]*content=["']([^"']+)["']/i)&.captures&.first ||
+      body.match(/<meta[^>]*content=["']([^"']+)["'][^>]*#{attribute}=["']#{Regexp.escape(value)}["']/i)&.captures&.first
+  end
+
+  def html_title(body)
+    body.match(/<title[^>]*>(.*?)<\/title>/im)&.captures&.first&.strip
+  end
+
+  def sanitize_domain_label(label)
+    label = label.to_s.strip
+    return if label.blank?
+
+    label.gsub(/\s+/, ' ')
+  end
+
+  def extract_subject_domain_values(value)
+    case value
+    when String
+      value.include?('vocabs.lter-europe.net/EnvThes') ? [value] : []
+    when Array
+      value.flat_map { |item| extract_subject_domain_values(item) }
+    when Hash
+      value.values.flat_map { |item| extract_subject_domain_values(item) }
+    else
+      []
+    end
+  end
+
+  public
+
   def show_group_name(domain)
     return domain unless link?(domain)
 
